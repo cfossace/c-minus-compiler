@@ -6,8 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * the main Class - Lexer
  */
 
 /**
@@ -29,7 +28,7 @@ public class Lexer
 
     private void init_tokens()
     {
-        tokens_val.put("main(){", 1000);
+        tokens_val.put("main", 1000);
         tokens_val.put("{", 1001);
         tokens_val.put("int", 1002);
         tokens_val.put("struct", 1003);
@@ -38,11 +37,13 @@ public class Lexer
         tokens_val.put(">>", 1006);
         tokens_val.put("cout", 1007);
         tokens_val.put("<<", 1008);
+        tokens_val.put("*", 1);
+        tokens_val.put("/", 3);
         tokens_val.put("&", 5);
         tokens_val.put("+", 6);
         tokens_val.put("-", 7);
         tokens_val.put("|", 8);
-        tokens_val.put("=", 10);
+        tokens_val.put("=", 9);
         tokens_val.put(".", 18);
         tokens_val.put(",", 19);
         tokens_val.put(":", 20);
@@ -76,9 +77,10 @@ public class Lexer
             String inline;
             while((inline = reader.readLine()) != null)
             {
-                this.line.add(inline);
-                this.tokenize(inline.toCharArray());
-                //read the enter line
+                inline = inline.trim(); //remove spaces
+                this.line.add(inline);  //add the complete line
+                this.tokenize(inline.toCharArray()); //get the tokens from the line
+                //read the empty line
                 reader.readLine();
             }
         }
