@@ -61,6 +61,7 @@ public class Lexer
         Lexer l = new Lexer();
         l.init_tokens();
         l.get();
+        l.print();
     }
 
     public void get()
@@ -93,9 +94,14 @@ public class Lexer
         {
             c = char_array[i];
             StringBuilder str = new StringBuilder();
-            if (Character.isDigit(c)||Character.isLetter(c))
+            if (Character.isDigit(c)||Character.isLetter(c)||(c=='-' && Character.isDigit(char_array[i+1])))
             {
-                while (Character.isDigit(char_array[i])||Character.isLetter(char_array[i]))
+                if (c=='-')
+                {
+                    str.append(char_array[i]);
+                    ++i;
+                }
+                while (i<char_array.length && (Character.isDigit(char_array[i])||Character.isLetter(char_array[i])))
                 {
                     str.append(char_array[i]);
                     ++i;
@@ -105,7 +111,7 @@ public class Lexer
                 ++i;
             else
             {
-                while (!Character.isDigit(char_array[i])&& !Character.isLetter(char_array[i]))
+                while (i<char_array.length &&(!Character.isDigit(char_array[i])&& !Character.isLetter(char_array[i])))
                 {
                     str.append(char_array[i]);
                     ++i;
@@ -122,6 +128,8 @@ public class Lexer
                     list.add(new Token(tokens_val.get("number"), str.toString()));
                 else if (Character.isLetter(str.toString().charAt(0)))
                     list.add(new Token(tokens_val.get("ident"), str.toString()));
+                else if (Character.isDigit(str.toString().charAt(1))&&str.toString().charAt(0)=='-')
+                    list.add(new Token(tokens_val.get("number"), str.toString()));
                 else
                 {
                     System.out.println("error ! unknown string");
@@ -144,8 +152,9 @@ public class Lexer
             System.out.print('\n');
             for (int j=0;j<lines.get(i).size();++j)
             {
-                System.out.println(lines.get(i).get(j).getToken_num()+'\t');
+                System.out.print(Integer.toString(lines.get(i).get(j).getToken_num())+'\t');
             }
+            System.out.print('\n');
 
         }
     }
