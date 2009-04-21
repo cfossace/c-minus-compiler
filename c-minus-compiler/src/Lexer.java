@@ -59,10 +59,10 @@ public class Lexer
 
     public static void main(String [] args)
     {
-        Lexer l = new Lexer();
-        l.init_tokens();
-        l.get();
-        l.print();
+        Lexer lex = new Lexer();
+        lex.init_tokens(); //create hash map with all the knows tokens
+        lex.get(); //get the tokens from the file
+        lex.print(); //print the tokens to the screen
     }
 
     public void get()
@@ -80,8 +80,7 @@ public class Lexer
                 inline = inline.trim(); //remove spaces
                 this.line.add(inline);  //add the complete line
                 this.tokenize(inline.toCharArray()); //get the tokens from the line
-                //read the empty line
-                reader.readLine();
+                reader.readLine(); //read the empty line
             }
         }
         catch(Exception e) {System.out.println(e.getMessage());}
@@ -96,7 +95,9 @@ public class Lexer
         {
             c = char_array[i];
             StringBuilder str = new StringBuilder();
-            if (Character.isDigit(c)||Character.isLetter(c)||(c=='-' && Character.isDigit(char_array[i+1])))
+            if (c==' ')
+                ++i;
+            else if (Character.isDigit(c)||Character.isLetter(c) || (c=='-' &&i+1<char_array.length&& Character.isDigit(char_array[i+1])))
             {
                 if (c=='-')
                 {
@@ -109,8 +110,6 @@ public class Lexer
                     ++i;
                 }
             }
-            else if (c==' ')
-                ++i;
             else
             {
                 while (i<char_array.length &&(!Character.isDigit(char_array[i])&& !Character.isLetter(char_array[i])))
@@ -122,17 +121,19 @@ public class Lexer
 
                 }
             }
+
+            //check and add the tokens with the appropriate values
             if (str.length()>0)
             {
-                if (tokens_val.containsKey(str.toString()))
+                if (tokens_val.containsKey(str.toString())) //for the known tokens
                         list.add(new Token(tokens_val.get(str.toString()), str.toString()));
-                else if (Character.isDigit(str.toString().charAt(0)))
+                else if (Character.isDigit(str.toString().charAt(0))) //for the numbers
                     list.add(new Token(tokens_val.get("number"), str.toString()));
-                else if (Character.isLetter(str.toString().charAt(0)))
+                else if (Character.isLetter(str.toString().charAt(0))) //for the variables
                     list.add(new Token(tokens_val.get("ident"), str.toString()));
-                else if (Character.isDigit(str.toString().charAt(1))&&str.toString().charAt(0)=='-')
+                else if (str.length()>1&&Character.isDigit(str.toString().charAt(1))&&str.toString().charAt(0)=='-') //for numbers with minus
                     list.add(new Token(tokens_val.get("number"), str.toString()));
-                else
+                else //for all other unknown vars
                 {
                     System.out.println("error ! unknown string");
                     System.exit(1);
