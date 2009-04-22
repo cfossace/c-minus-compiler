@@ -39,14 +39,14 @@ public class Lexer
         tokens_val.put("<<", 1008);
         tokens_val.put("*", 1);
         tokens_val.put("/", 3);
-        tokens_val.put("&", 5);
+        //tokens_val.put("&", 5);
         tokens_val.put("+", 6);
         tokens_val.put("-", 7);
-        tokens_val.put("|", 8);
+        //tokens_val.put("|", 8);
         tokens_val.put("=", 9);
         tokens_val.put(".", 18);
         tokens_val.put(",", 19);
-        tokens_val.put(":", 20);
+        //tokens_val.put(":", 20);
         tokens_val.put(")",22);
         tokens_val.put("]", 23);
         tokens_val.put("(", 29);
@@ -97,13 +97,13 @@ public class Lexer
             StringBuilder str = new StringBuilder();
             if (c==' ')
                 ++i;
-            else if (Character.isDigit(c)||Character.isLetter(c) || (c=='-' &&i+1<char_array.length&& Character.isDigit(char_array[i+1])))
+            else if (Character.isDigit(c)||Character.isLetter(c) )//|| (c=='-' &&i+1<char_array.length&& Character.isDigit(char_array[i+1])))
             {
-                if (c=='-')
-                {
-                    str.append(char_array[i]);
-                    ++i;
-                }
+//                if (c=='-')
+//                {
+//                    str.append(char_array[i]);
+//                    ++i;
+//                }
                 while (i<char_array.length && (Character.isDigit(char_array[i])||Character.isLetter(char_array[i])))
                 {
                     str.append(char_array[i]);
@@ -131,8 +131,8 @@ public class Lexer
                     list.add(new Token(tokens_val.get("number"), str.toString()));
                 else if (Character.isLetter(str.toString().charAt(0))) //for the variables
                     list.add(new Token(tokens_val.get("ident"), str.toString()));
-                else if (str.length()>1&&Character.isDigit(str.toString().charAt(1))&&str.toString().charAt(0)=='-') //for numbers with minus
-                    list.add(new Token(tokens_val.get("number"), str.toString()));
+                //else if (str.length()>1&&Character.isDigit(str.toString().charAt(1))&&str.toString().charAt(0)=='-') //for numbers with minus
+                   // list.add(new Token(tokens_val.get("number"), str.toString()));
                 else //for all other unknown vars
                 {
                     System.out.println("error ! unknown string");
@@ -159,6 +159,40 @@ public class Lexer
             }
             System.out.print('\n');
 
+        }
+    }
+
+    //the private class that holds the token and its symbol number
+    private class Token
+    {
+
+        String token;
+        int token_num;
+
+        public Token(int num, String tok)
+        {
+            this.token = tok;
+            this.token_num = num;
+        }
+
+        public String getToken()
+        {
+            return token;
+        }
+
+        public void setToken(String token)
+        {
+            this.token = token;
+        }
+
+        public int getToken_num()
+        {
+            return token_num;
+        }
+
+        public void setToken_num(int token_num)
+        {
+            this.token_num = token_num;
         }
     }
 }
