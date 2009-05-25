@@ -26,7 +26,7 @@ public class Lexer
         this.line = new ArrayList<String>();
     }
 
-    private void init_tokens()
+    public void init_tokens()
     {
         tokens_val.put("main", 1000);
         tokens_val.put("{", 1001);
@@ -67,7 +67,7 @@ public class Lexer
 
     public void get()
     {
-        File file = new File("input.txt");
+        File file = new File("program.txt");
         BufferedReader reader = null;
         FileReader fr = null;
         try
@@ -80,13 +80,13 @@ public class Lexer
                 inline = inline.trim(); //remove spaces
                 this.line.add(inline);  //add the complete line
                 this.tokenize(inline.toCharArray()); //get the tokens from the line
-                reader.readLine(); //read the empty line
+               // reader.readLine(); //read the empty line******* this is not supposed to be here
             }
         }
         catch(Exception e) {System.out.println(e.getMessage());}
     }
 
-    private void tokenize(char [] char_array)
+    public void tokenize(char [] char_array)
     {
         char c;
         int i=0;
@@ -163,7 +163,7 @@ public class Lexer
     }
 
     //the private class that holds the token and its symbol number
-    private class Token
+    public class Token
     {
 
         String token;
@@ -194,5 +194,10 @@ public class Lexer
         {
             this.token_num = token_num;
         }
+    }
+
+    public ArrayList<ArrayList<Token>> getLines()
+    {
+    	return this.lines;
     }
 }
