@@ -152,27 +152,37 @@ public class ex3_symbol
 		//------------------------------------------------------------------------------------------------
 		else
 		{
-			ArrayList<ArrayList<Lexer.Token>> struct = this.getStructDef(line);
+			ArrayList<ArrayList<Lexer.Token>> struct = this.getStructDefinition(line);
 			ArrayList<Lexer.Token> variables = this.getStructVars(line);
 
-			Record structDefinition = new Record();
-			structDefinition.setName(line.get(1).getToken());
-			structDefinition.setType("type");
+			//----------------------------------
+			// creating the struct's name record
+			//----------------------------------
+			Record structName = new Record();
+			structName.setName(line.get(1).getToken());
+			structName.setType("type");
 			m_tableAddress += 20;
-			structDefinition.setDefinition(m_tableAddress.toString());
+			structName.setDefinition(m_tableAddress.toString());
+			structName.setMemAddress("");
 			Integer next = m_tableAddress+8+20*variables.size();
-			structDefinition.setNext(next.toString());
+			structName.setNext(next.toString());
+
+			this.addToList(structName);
+
+			//-----------------------------------------
+			// creating the struct's definition record
+			//-----------------------------------------
+			Record structDefinition = new Record();
+			Integer structDefAddress = m_tableAddress;
+			structDefinition.setName("struct "+line.get(1).getToken());
+			m_tableAddress += 8;
+			structDefinition.setNext(m_tableAddress.toString());
 
 			this.addToList(structDefinition);
 
-			Record structDeclaration = new Record();
-			Integer structDeclareAddress = m_tableAddress;
-			structDeclaration.setName("struct "+line.get(1).getToken());
-			m_tableAddress += 8;
-			structDeclaration.setNext(m_tableAddress.toString());
-
-			this.addToList(structDeclaration);
-
+			//-------------------------------------------------------------
+			// creating a record for each variable in the struct definition
+			//-------------------------------------------------------------
 			for (int i=0; i<struct.size(); i++)
 			{
 				ArrayList<Lexer.Token> currentElement = struct.get(i);
@@ -183,30 +193,27 @@ public class ex3_symbol
 				element.setMemAddress("");
 				m_tableAddress += 20;
 
-				if ( i != currentElement.size()-1)
+				if ( i != struct.size()-1)
 					element.setNext(m_tableAddress.toString());
 				else
 					element.setNext("null");
 
 				this.addToList(element);
 			}
-
+			//---------------------------------------------------------------
+			//creating a record for each actual variable of the type 'struct'
+			//---------------------------------------------------------------
 			for (int i=0; i<variables.size(); i++)
 			{
 				Record var = new Record();
 				var.setName(variables.get(i).getToken());
 				var.setType("var");
-				var.setDefinition(structDeclareAddress.toString());
+				var.setDefinition(structDefAddress.toString());
 				var.setMemAddress(m_memoryAddress.toString());
 				m_memoryAddress += struct.size()*4;
 
-				if (i!= variables.size()-1)
-				{
-					m_tableAddress += 20;
-					var.setNext(m_tableAddress.toString());
-				}
-				else
-					var.setNext("null");
+				m_tableAddress += 20;
+				var.setNext(m_tableAddress.toString());
 
 				this.addToList(var);
 			}
@@ -315,16 +322,16 @@ public class ex3_symbol
 	// Description: getting an array list of tokens that represents the definition of a struct.
 	//				returning a single array list for every variable in the declaration.
 	//-----------------------------------------------------------------------------------------
-	public ArrayList<ArrayList<Lexer.Token>> getStructDef(ArrayList<Lexer.Token> line)
+	public ArrayList<ArrayList<Lexer.Token>> getStructDefinition(ArrayList<Lexer.Token> line)
 	{
 		ArrayList<ArrayList<Lexer.Token>> toReturn = new ArrayList<ArrayList<Lexer.Token>>();
 		ArrayList<Lexer.Token> temp = new ArrayList<Lexer.Token>();
 
 		for (int i=3; i<line.size(); i++)  							//ignoring : "const x {"
 		{
-			if ( (line.get(i).getToken().equals("}") ) )
+			if ( (line.get(i).getToken().equals("}")) )
 				return toReturn;
-			else if (   !(line.get(i).getToken().equals(";") ) )
+			else if (   !(line.get(i).getToken().equals(";")) )
 				temp.add(line.get(i));
 			else
 			{

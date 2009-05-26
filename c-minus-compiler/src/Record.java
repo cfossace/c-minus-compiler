@@ -73,7 +73,10 @@ public class Record
 
 			if (this.name != null)
 			{
-				writer.write(this.name);
+				if (this.name.contains("struct"))
+					writer.write("struct");
+				else
+					writer.write(this.name);
 				writer.newLine();
 			}
 			if (this.type != null)
