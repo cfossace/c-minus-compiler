@@ -157,7 +157,7 @@ public class ex3_symbol
 		//------------------------------------------------------------------------------------------------
 		//if we have a "struct" statement. examples: struct z {int a;int b;} s, t;  struct Z {int a;} s;
 		//------------------------------------------------------------------------------------------------
-		else
+		else if (firstToken.equals("struct"))
 		{
 			ArrayList<ArrayList<Lexer.Token>> struct = this.getStructDefinition(line);
 			ArrayList<Lexer.Token> variables = this.getStructVars(line);
@@ -171,7 +171,7 @@ public class ex3_symbol
 			m_tableAddress += 20;
 			structName.setDefinition(m_tableAddress.toString());
 			structName.setMemAddress("");
-			Integer next = m_tableAddress+8+20*variables.size();
+			Integer next = m_tableAddress+8+20*struct.size();
 			structName.setNext(next.toString());
 
 			this.addToList(structName);
@@ -203,7 +203,7 @@ public class ex3_symbol
 				if ( i != struct.size()-1)
 					element.setNext(m_tableAddress.toString());
 				else
-					element.setNext("null");
+					element.setNext("NIL");
 
 				this.addToList(element);
 			}
@@ -225,6 +225,8 @@ public class ex3_symbol
 				this.addToList(var);
 			}
 		}
+		else
+			System.out.println("wrong input! no such statement: "+firstToken);
 	}
 
 	//-----------------------------------------------------------------------------------------
@@ -295,7 +297,7 @@ public class ex3_symbol
 	//-----------------------------------------------------------------------------------------
 	public void lastToNull()
 	{
-		this.m_list.getLast().setNext("null");
+		this.m_list.getLast().setNext("NIL");
 	}
 
 	//------------------------------------------------------------------------------------------------
