@@ -5,7 +5,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-
+//--------------------------------------------------------------------------------------------------
+// CLASS: ex3_symbol
+// Description: This class is responsible for creating an appropriate symbol table for a given text
+//--------------------------------------------------------------------------------------------------
 public class ex3_symbol
 {
 	private Lexer m_lexer;
@@ -14,6 +17,10 @@ public class ex3_symbol
 	private Integer m_tableAddress;
 	private BufferedWriter m_writer;
 
+	//-----------------------------------------------------------------------------------------
+	// Function: ex3_symbol
+	// Description: Constructor
+	//-----------------------------------------------------------------------------------------
 	public ex3_symbol()
 	{
 		try
@@ -227,7 +234,7 @@ public class ex3_symbol
 	//-----------------------------------------------------------------------------------------
 	public void addToList(Record record)
 	{
-		if (!this.serachList(record.getName()))
+		if (!this.serachListByName(record.getName()))
 			m_list.add(record);
 		else
 		{
@@ -256,7 +263,7 @@ public class ex3_symbol
 	// Function: searchList
 	// Description: Checking if a record with the given name already exists in the linked list.
 	//-----------------------------------------------------------------------------------------
-	public boolean serachList(String name)
+	public boolean serachListByName(String name)
 	{
 		Iterator<Record> iterator = m_list.iterator();
 		while (iterator.hasNext())
