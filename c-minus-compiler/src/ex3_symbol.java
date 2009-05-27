@@ -15,6 +15,7 @@ public class ex3_symbol
 	private LinkedList<Record> m_list;
 	private Integer m_memoryAddress;
 	private Integer m_tableAddress;
+	private ArrayList<String> m_structVars;
 	private BufferedWriter m_writer;
 
 	//-----------------------------------------------------------------------------------------
@@ -30,6 +31,7 @@ public class ex3_symbol
 			m_list = new LinkedList<Record>();
 			m_memoryAddress = 1000;
 			m_tableAddress = 0;
+			m_structVars = new ArrayList<String>();
 		}
 		catch (IOException e)
 		{
@@ -194,7 +196,18 @@ public class ex3_symbol
 			{
 				ArrayList<Lexer.Token> currentElement = struct.get(i);
 				Record element = new Record();
-				element.setName(currentElement.get(1).getToken());
+
+				//only if the variable was not already defined in the current struct- we continue (cannot be: int a; int a; in one struct)
+				if (!this.setFieldName(currentElement.get(1).getToken()))
+				{
+					element.setName(currentElement.get(1).getToken());
+					this.m_structVars.add(currentElement.get(1).getToken());
+				}
+				else
+				{
+					System.out.println("Double definition of variable "+currentElement.get(1).getToken()+" in struct "+line.get(1).getToken()+" !");
+					System.exit(1);
+				}
 				element.setType("field");
 				element.setDefinition("int");
 				element.setMemAddress("");
@@ -205,8 +218,10 @@ public class ex3_symbol
 				else
 					element.setNext("NIL");
 
-				this.addToList(element);
+				this.addStructVarToList(element);
 			}
+			this.m_structVars.clear();
+
 			//---------------------------------------------------------------
 			//creating a record for each actual variable of the type 'struct'
 			//---------------------------------------------------------------
@@ -230,6 +245,19 @@ public class ex3_symbol
 	}
 
 	//-----------------------------------------------------------------------------------------
+	// Function: setFieldName
+	// Description: Checking the there aren't 2 variables in the same name inside one struct.
+	//-----------------------------------------------------------------------------------------
+	private boolean setFieldName(String name)
+	{
+		for (int i=0 ; i<m_structVars.size(); i++)
+			if (m_structVars.get(i).equals(name))
+				return true;
+		return false;
+	}
+
+
+	//-----------------------------------------------------------------------------------------
 	// Function: addToList
 	// Description: Checking if there isn't a duplicate statement of the same variable.
 	//				If not - adding the new record of the variable into the list.
@@ -244,6 +272,17 @@ public class ex3_symbol
 			System.exit(1);
 		}
 	}
+
+	//-----------------------------------------------------------------------------------------
+	// Function: addStructVarToList
+	// Description: a struct's components can have the same names as variables that were
+	//				already defined in the program, thats why we don't need to check it.
+	//-----------------------------------------------------------------------------------------
+	public void addStructVarToList(Record record)
+	{
+		m_list.add(record);
+	}
+
 
 	//-----------------------------------------------------------------------------------------
 	// Function: printTable()
