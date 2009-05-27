@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import sun.org.mozilla.javascript.internal.Token;
+
 //--------------------------------------------------------------------------------------------------
-// CLASS: ex3_symbol
-// Description: This class is responsible for creating an appropriate symbol table for a given text
+//CLASS: ex3_symbol
+//Description: This class is responsible for creating an appropriate symbol table for a given text
 //--------------------------------------------------------------------------------------------------
 public class ex3_symbol
 {
@@ -15,6 +17,7 @@ public class ex3_symbol
 	private LinkedList<Record> m_list;
 	private Integer m_memoryAddress;
 	private Integer m_tableAddress;
+	private Integer m_index;
 	private ArrayList<String> m_structVars;
 	private BufferedWriter m_writer;
 
@@ -32,6 +35,7 @@ public class ex3_symbol
 			m_memoryAddress = 1000;
 			m_tableAddress = 0;
 			m_structVars = new ArrayList<String>();
+			m_index = -1;
 		}
 		catch (IOException e)
 		{
@@ -57,8 +61,16 @@ public class ex3_symbol
 	public void createTable()
 	{
 		ArrayList<ArrayList<Lexer.Token>> lines = m_lexer.getLines();
+		int check = -1;
 		for (int i=0; i<lines.size(); i++)
-			handleLine(lines.get(i));
+		{
+			check = handleLine(lines.get(i),i);
+			if (check != -1)
+			{
+				i = check;
+				m_index = -1;
+			}
+		}
 	}
 
 	//-----------------------------------------------------------------------------------------
@@ -66,7 +78,7 @@ public class ex3_symbol
 	// Description: Getting an array list of tokens that represents a line from the input file.
 	//				For every line- creating the correct Record & inserting it to the list.
 	//-----------------------------------------------------------------------------------------
-	public void handleLine(ArrayList<Lexer.Token> line)
+	public int handleLine(ArrayList<Lexer.Token> line,int rowNum)
 	{
 		String firstToken = line.get(0).getToken();
 		if (firstToken.equals("int"))
@@ -105,20 +117,20 @@ public class ex3_symbol
 				ArrayList<ArrayList<Lexer.Token>> declarations = this.dismantleIntegerLine(line);
 				for (int i=0; i<declarations.size(); i++)
 				{
-						ArrayList<Lexer.Token> lineParts = declarations.get(i);
-						Record record = new Record();
-						record.setName(lineParts.get(0).getToken());
-						record.setType("var");
-						record.setDefinition("int");
-						record.setMemAddress(m_memoryAddress.toString());
-						m_memoryAddress += 4;
-						m_tableAddress += 20;
-						record.setNext(m_tableAddress.toString());
+					ArrayList<Lexer.Token> lineParts = declarations.get(i);
+					Record record = new Record();
+					record.setName(lineParts.get(0).getToken());
+					record.setType("var");
+					record.setDefinition("int");
+					record.setMemAddress(m_memoryAddress.toString());
+					m_memoryAddress += 4;
+					m_tableAddress += 20;
+					record.setNext(m_tableAddress.toString());
 
-						this.addToList(record);
+					this.addToList(record);
 				}
 			}
-
+			return -1;
 		}
 		//-------------------------------------------------------------------------------------------
 		//if we have a "const" statement. examples: const int a; const int a=3,b; const int a=3,b=5;
@@ -155,12 +167,16 @@ public class ex3_symbol
 					this.addToList(record);
 				}
 			}
+			return -1;
 		}
 		//------------------------------------------------------------------------------------------------
 		//if we have a "struct" statement. examples: struct z {int a;int b;} s, t;  struct Z {int a;} s;
 		//------------------------------------------------------------------------------------------------
 		else if (firstToken.equals("struct"))
 		{
+
+			line = this.handleStructEnters(line, rowNum);
+
 			ArrayList<ArrayList<Lexer.Token>> struct = this.getStructDefinition(line);
 			ArrayList<Lexer.Token> variables = this.getStructVars(line);
 
@@ -242,7 +258,35 @@ public class ex3_symbol
 		}
 		else
 			System.out.println("wrong input! no such statement: "+firstToken);
+		return m_index;
 	}
+
+	//-----------------------------------------------------------------------------------------------------------
+	// Function: handleStructEnters(int index)
+	// Description: if there is a struct defined, but inside its statement there are enter chars,
+	//				we read all the lines until the end of the statement and only then continue to deal with it.
+	//-----------------------------------------------------------------------------------------------------------
+	private ArrayList<Lexer.Token> handleStructEnters(ArrayList<Lexer.Token> currentLine, int index)
+	{
+		if ( (searchToken("{", currentLine)) && !(searchToken("}", currentLine)))
+		{
+			ArrayList<ArrayList<Lexer.Token>> lines = m_lexer.getLines();
+			ArrayList<Lexer.Token> newLine = new ArrayList<Lexer.Token>();
+
+
+			while ( !searchToken("}", currentLine))
+			{
+				newLine.addAll(lines.get(index));
+				index++;
+				currentLine = lines.get(index);
+			}
+			newLine.addAll(currentLine);
+			m_index = index;
+			return newLine;
+		}
+		return currentLine;
+	}
+
 
 	//-----------------------------------------------------------------------------------------
 	// Function: setFieldName
