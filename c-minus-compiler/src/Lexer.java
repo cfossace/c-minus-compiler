@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 
 /*
  * the main Class - Lexer
@@ -67,7 +68,7 @@ public class Lexer
 
     public void get()
     {
-        File file = new File("program.txt");
+        File file = new File("prog.txt");
         BufferedReader reader = null;
         FileReader fr = null;
         try
@@ -95,7 +96,7 @@ public class Lexer
         {
             c = char_array[i];
             StringBuilder str = new StringBuilder();
-            if (c==' ')
+            if ((c==' ') || (c=='\t'))
                 ++i;
             else if (Character.isDigit(c)||Character.isLetter(c) )//|| (c=='-' &&i+1<char_array.length&& Character.isDigit(char_array[i+1])))
             {
@@ -161,43 +162,18 @@ public class Lexer
 
         }
     }
-
-    //the private class that holds the token and its symbol number
-    public class Token
-    {
-
-        String token;
-        int token_num;
-
-        public Token(int num, String tok)
-        {
-            this.token = tok;
-            this.token_num = num;
-        }
-
-        public String getToken()
-        {
-            return token;
-        }
-
-        public void setToken(String token)
-        {
-            this.token = token;
-        }
-
-        public int getToken_num()
-        {
-            return token_num;
-        }
-
-        public void setToken_num(int token_num)
-        {
-            this.token_num = token_num;
-        }
-    }
-
     public ArrayList<ArrayList<Token>> getLines()
     {
     	return this.lines;
     }
+
+    public LinkedList<Token> getAllReadTokens()
+    {
+    	LinkedList<Token> toReturn = new LinkedList<Token>();
+    	for (int i=0; i<lines.size(); i++)
+    		for (int j=0; j<lines.get(i).size(); j++)
+    			toReturn.add(lines.get(i).get(j));
+    	return toReturn;
+    }
+
 }

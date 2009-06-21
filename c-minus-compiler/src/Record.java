@@ -61,8 +61,8 @@ public class Record
 	}
 
 	//-----------------------------------------------------------------------------------------
-	// Function:
-	// Description:
+	// Function: printRecord
+	// Description: Printing out record's details to a file
 	//-----------------------------------------------------------------------------------------
 	public void printRecord(BufferedWriter writer, int recordNum)
 	{

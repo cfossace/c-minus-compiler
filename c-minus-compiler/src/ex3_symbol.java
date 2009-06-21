@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import sun.org.mozilla.javascript.internal.Token;
-
 //--------------------------------------------------------------------------------------------------
 //CLASS: ex3_symbol
 //Description: This class is responsible for creating an appropriate symbol table for a given text
@@ -20,6 +18,7 @@ public class ex3_symbol
 	private Integer m_index;
 	private ArrayList<String> m_structVars;
 	private BufferedWriter m_writer;
+	private LinkedList<Token> m_rowsWithoutStatements;
 
 	//-----------------------------------------------------------------------------------------
 	// Function: ex3_symbol
@@ -36,6 +35,7 @@ public class ex3_symbol
 			m_tableAddress = 0;
 			m_structVars = new ArrayList<String>();
 			m_index = -1;
+			m_rowsWithoutStatements = new LinkedList<Token>();
 		}
 		catch (IOException e)
 		{
@@ -60,7 +60,7 @@ public class ex3_symbol
 	//-----------------------------------------------------------------------------------------
 	public void createTable()
 	{
-		ArrayList<ArrayList<Lexer.Token>> lines = m_lexer.getLines();
+		ArrayList<ArrayList<Token>> lines = m_lexer.getLines();
 		int check = -1;
 		for (int i=0; i<lines.size(); i++)
 		{
@@ -78,7 +78,7 @@ public class ex3_symbol
 	// Description: Getting an array list of tokens that represents a line from the input file.
 	//				For every line- creating the correct Record & inserting it to the list.
 	//-----------------------------------------------------------------------------------------
-	public int handleLine(ArrayList<Lexer.Token> line,int rowNum)
+	public int handleLine(ArrayList<Token> line,int rowNum)
 	{
 		String firstToken = line.get(0).getToken();
 		if (firstToken.equals("int"))
@@ -114,10 +114,10 @@ public class ex3_symbol
 			//--------------------------------------------------------------------------------------
 			else
 			{
-				ArrayList<ArrayList<Lexer.Token>> declarations = this.dismantleIntegerLine(line);
+				ArrayList<ArrayList<Token>> declarations = this.dismantleIntegerLine(line);
 				for (int i=0; i<declarations.size(); i++)
 				{
-					ArrayList<Lexer.Token> lineParts = declarations.get(i);
+					ArrayList<Token> lineParts = declarations.get(i);
 					Record record = new Record();
 					record.setName(lineParts.get(0).getToken());
 					record.setType("var");
@@ -138,10 +138,10 @@ public class ex3_symbol
 		else if (firstToken.equals("const"))
 		{
 			line.remove(0);														//removing the word "const"
-			ArrayList<ArrayList<Lexer.Token>> declarations = this.dismantleIntegerLine(line);
+			ArrayList<ArrayList<Token>> declarations = this.dismantleIntegerLine(line);
 			for (int i=0; i<declarations.size(); i++)
 			{
-				ArrayList<Lexer.Token> lineParts = declarations.get(i);
+				ArrayList<Token> lineParts = declarations.get(i);
 				if (lineParts.size() ==1 )
 				{
 					Record record = new Record();
@@ -177,8 +177,8 @@ public class ex3_symbol
 
 			line = this.handleStructEnters(line, rowNum);
 
-			ArrayList<ArrayList<Lexer.Token>> struct = this.getStructDefinition(line);
-			ArrayList<Lexer.Token> variables = this.getStructVars(line);
+			ArrayList<ArrayList<Token>> struct = this.getStructDefinition(line);
+			ArrayList<Token> variables = this.getStructVars(line);
 
 			//----------------------------------
 			// creating the struct's name record
@@ -210,7 +210,7 @@ public class ex3_symbol
 			//-------------------------------------------------------------
 			for (int i=0; i<struct.size(); i++)
 			{
-				ArrayList<Lexer.Token> currentElement = struct.get(i);
+				ArrayList<Token> currentElement = struct.get(i);
 				Record element = new Record();
 
 				//only if the variable was not already defined in the current struct- we continue (cannot be: int a; int a; in one struct)
@@ -257,7 +257,11 @@ public class ex3_symbol
 			}
 		}
 		else
-			System.out.println("wrong input! no such statement: "+firstToken);
+		{
+			for (int i=0; i<line.size(); i++)
+				m_rowsWithoutStatements.add(line.get(i));
+		}
+
 		return m_index;
 	}
 
@@ -266,12 +270,12 @@ public class ex3_symbol
 	// Description: if there is a struct defined, but inside its statement there are enter chars,
 	//				we read all the lines until the end of the statement and only then continue to deal with it.
 	//-----------------------------------------------------------------------------------------------------------
-	private ArrayList<Lexer.Token> handleStructEnters(ArrayList<Lexer.Token> currentLine, int index)
+	private ArrayList<Token> handleStructEnters(ArrayList<Token> currentLine, int index)
 	{
 		if ( (searchToken("{", currentLine)) && !(searchToken("}", currentLine)))
 		{
-			ArrayList<ArrayList<Lexer.Token>> lines = m_lexer.getLines();
-			ArrayList<Lexer.Token> newLine = new ArrayList<Lexer.Token>();
+			ArrayList<ArrayList<Token>> lines = m_lexer.getLines();
+			ArrayList<Token> newLine = new ArrayList<Token>();
 
 
 			while ( !searchToken("}", currentLine))
@@ -364,7 +368,7 @@ public class ex3_symbol
 	// Function: searchToken
 	// Description: searching a specific token (by its name) in an arrayList of tokens
 	//-----------------------------------------------------------------------------------------
-	public boolean searchToken(String token, ArrayList<Lexer.Token> array)
+	public boolean searchToken(String token, ArrayList<Token> array)
 	{
 		for (int i=0; i<array.size(); i++)
 		{
@@ -390,10 +394,10 @@ public class ex3_symbol
 	//				example: int a=3,b; --> 1st array list: a = 3
 	//										2nd array list: b
 	//------------------------------------------------------------------------------------------------
-	public ArrayList<ArrayList<Lexer.Token>> dismantleIntegerLine(ArrayList<Lexer.Token> line)
+	public ArrayList<ArrayList<Token>> dismantleIntegerLine(ArrayList<Token> line)
 	{
-		ArrayList<ArrayList<Lexer.Token>> toReturn = new ArrayList<ArrayList<Lexer.Token>>();
-		ArrayList<Lexer.Token> temp = new ArrayList<Lexer.Token>();
+		ArrayList<ArrayList<Token>> toReturn = new ArrayList<ArrayList<Token>>();
+		ArrayList<Token> temp = new ArrayList<Token>();
 
 		for (int i=1; i<line.size(); i++) 	//starting from 1 to ignore the word "int"
 		{
@@ -402,7 +406,7 @@ public class ex3_symbol
 			else
 			{
 				toReturn.add(temp);
-				temp = new ArrayList<Lexer.Token>();
+				temp = new ArrayList<Token>();
 			}
 		}
 
@@ -414,10 +418,10 @@ public class ex3_symbol
 	// Description: getting an array list of tokens that represents the definition of a struct.
 	//				returning a single array list for every variable in the declaration.
 	//-----------------------------------------------------------------------------------------
-	public ArrayList<ArrayList<Lexer.Token>> getStructDefinition(ArrayList<Lexer.Token> line)
+	public ArrayList<ArrayList<Token>> getStructDefinition(ArrayList<Token> line)
 	{
-		ArrayList<ArrayList<Lexer.Token>> toReturn = new ArrayList<ArrayList<Lexer.Token>>();
-		ArrayList<Lexer.Token> temp = new ArrayList<Lexer.Token>();
+		ArrayList<ArrayList<Token>> toReturn = new ArrayList<ArrayList<Token>>();
+		ArrayList<Token> temp = new ArrayList<Token>();
 
 		for (int i=3; i<line.size(); i++)  							//ignoring : "const x {"
 		{
@@ -428,7 +432,7 @@ public class ex3_symbol
 			else
 			{
 				toReturn.add(temp);
-				temp = new ArrayList<Lexer.Token>();
+				temp = new ArrayList<Token>();
 			}
 		}
 
@@ -441,10 +445,10 @@ public class ex3_symbol
 	//				returning an array list of tokens representing the variables of the 'struct' kind.
 	//				example: struct z{int x; int y;}s,t; --> will return only the tokens s,t
 	//------------------------------------------------------------------------------------------------
-	public ArrayList<Lexer.Token> getStructVars(ArrayList<Lexer.Token> line)
+	public ArrayList<Token> getStructVars(ArrayList<Token> line)
 	{
 		int index = 0;
-		ArrayList<Lexer.Token> toReturn = new ArrayList<Lexer.Token>();
+		ArrayList<Token> toReturn = new ArrayList<Token>();
 
 		for (int i=0; i<line.size(); i++)
 		{
@@ -465,6 +469,54 @@ public class ex3_symbol
 		}
 
 		return toReturn;
+	}
+
+
+
+	//------------------------------------------------------------------------------------------------------
+	// Function: containsVariable
+	// Description: This function return true if the symbol table contains a VARIABLE with the given name
+	//------------------------------------------------------------------------------------------------------
+	public boolean containsVariable(String name)
+	{
+		Iterator<Record> iterator = m_list.iterator();
+		while (iterator.hasNext())
+		{
+			Record current = iterator.next();
+			if (current.getName().equals(name) && (current.getType().equals("var")) )
+				return true;
+		}
+		return false;
+	}
+
+	public String getTokenMemAddress(String name)
+	{
+		Iterator<Record> iterator = m_list.iterator();
+		while (iterator.hasNext())
+		{
+			Record current = iterator.next();
+			if (current.getName().equals(name))
+				return current.getMemAddress();
+		}
+		return null;
+	}
+
+
+	public Record getRecordByName(String name)
+	{
+		Iterator<Record> iterator = m_list.iterator();
+		while (iterator.hasNext())
+		{
+			Record current = iterator.next();
+			if (current.getName().equals(name))
+				return current;
+		}
+		return null;
+	}
+
+	public LinkedList<Token> getRowsToDo()
+	{
+		return m_rowsWithoutStatements;
 	}
 
 	//-----------------------------------------------------------------------------------------

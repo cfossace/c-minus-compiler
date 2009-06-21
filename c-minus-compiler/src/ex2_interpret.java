@@ -40,7 +40,7 @@ public class ex2_interpret
 		{
 			m_Memory = new int[1024];
 			m_Registers = new int[32];
-			m_reader1 = new BufferedReader(new FileReader(new File("prog.txt")));
+			m_reader1 = new BufferedReader(new FileReader(new File("interpreter.txt")));
 			m_reader2 = new BufferedReader(new FileReader(new File("input.txt")));
 		}
 		catch (IOException e)
