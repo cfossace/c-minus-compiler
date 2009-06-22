@@ -141,7 +141,8 @@ public class Lexer
                 }
             }
         }
-        lines.add(list);
+        if (!list.isEmpty())
+            lines.add(list);
     }
 
     public void print()

@@ -519,10 +519,38 @@ public class ex3_symbol
 		return m_rowsWithoutStatements;
 	}
 
+    public String GetSymbolAddress(String str)
+    {
+        //hello world - this is my first program
+        int count = -1;
+        String [] parse = new String[2];
+        parse = str.split("[.]");
+        if (this.serachListByName(parse[0])) //check if ZZ is exist
+        {
+            Record currentRec = this.getRecordByName(parse[0]); //get record by name from the list
+            Iterator<Record> it = m_list.iterator();
+            while (it.hasNext()) //looking for Z type
+            {
+                Record rec = it.next();
+                if (rec.getDefinition()!=null && rec.getDefinition().equals(currentRec.getDefinition())) //got Z type
+                {
+                    while (it.hasNext())
+                    {
+                         Record z_rec = it.next();
+                         if (z_rec.getName().equals(parse[1]))
+                             return Integer.toString(Integer.parseInt(currentRec.getMemAddress())+4*count);
+                         count ++;
+                    }
+                }
+            }
+        }
+        return Integer.toString(-1);
+    }
+
 	//-----------------------------------------------------------------------------------------
 	// Function: main
 	//-----------------------------------------------------------------------------------------
-	public static void main (String args[])
+    public static void main (String args[])
 	{
 		try
 		{

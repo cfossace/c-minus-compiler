@@ -1,0 +1,18 @@
+main() {
+  int a, b, c = 1;
+  int d[3];
+  struct z {
+	  int a;
+	  int b;
+	} zz;
+
+  cin >>     a;
+  cin >> b; 
+  zz.a = 2 * a;
+  zz.b = b / 3;
+  d[0] = (zz.a + 1) * (a - 1);
+  d[1] = 2 - zz.b;
+  d[2] = d[0] + d[1];
+ cout << d[2]* 3; 
+
+}
