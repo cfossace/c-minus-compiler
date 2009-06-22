@@ -189,6 +189,19 @@ public class ex2_interpret
 		return 0;
 	}
 
+	//--------------------------------------------------------------------------------------------
+	// Function: setVarsValue
+	// Description: This function gets an array list containing pairs: address and then its value.
+	//				It performs the assignment of the value to the address (in the memory).
+	//--------------------------------------------------------------------------------------------
+	public void setVarsValue(ArrayList<Integer> varsValues)
+	{
+		for (int i=0; i<varsValues.size(); i+=2)
+		{
+			m_Memory[(varsValues.get(i))/4] = varsValues.get(i+1);
+		}
+	}
+
 
 
 }

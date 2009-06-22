@@ -2,6 +2,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -19,6 +20,7 @@ public class ex3_symbol
 	private ArrayList<String> m_structVars;
 	private BufferedWriter m_writer;
 	private LinkedList<Token> m_rowsWithoutStatements;
+	private ArrayList<Integer> m_varsWithValues;
 
 	//-----------------------------------------------------------------------------------------
 	// Function: ex3_symbol
@@ -36,6 +38,7 @@ public class ex3_symbol
 			m_structVars = new ArrayList<String>();
 			m_index = -1;
 			m_rowsWithoutStatements = new LinkedList<Token>();
+			m_varsWithValues = new ArrayList<Integer>();
 		}
 		catch (IOException e)
 		{
@@ -123,6 +126,12 @@ public class ex3_symbol
 					record.setType("var");
 					record.setDefinition("int");
 					record.setMemAddress(m_memoryAddress.toString());
+					if (lineParts.size()==3)						//if we had a variable that got a value in the statement - save it !
+					{
+						m_varsWithValues.add(m_memoryAddress);		//we add the address and the value it needs to get
+						m_varsWithValues.add(Integer.parseInt(lineParts.get(2).getToken()));
+					}
+
 					m_memoryAddress += 4;
 					m_tableAddress += 20;
 					record.setNext(m_tableAddress.toString());
@@ -489,6 +498,10 @@ public class ex3_symbol
 		return false;
 	}
 
+	//--------------------------------------------------------------------------------------------------
+	// Function: getTokenMemAddress
+	// Description: This function is looking for a specific token buy its name & returning its address
+	//---------------------------------------------------------------------------------------------------
 	public String getTokenMemAddress(String name)
 	{
 		Iterator<Record> iterator = m_list.iterator();
@@ -501,7 +514,10 @@ public class ex3_symbol
 		return null;
 	}
 
-
+	//--------------------------------------------------------------------------------------------------
+	// Function: getTokenMemAddress
+	// Description: This function is looking for a specific token buy its name & returning it.
+	//---------------------------------------------------------------------------------------------------
 	public Record getRecordByName(String name)
 	{
 		Iterator<Record> iterator = m_list.iterator();
@@ -514,11 +530,21 @@ public class ex3_symbol
 		return null;
 	}
 
+	//--------------------------------------------------------------------------------------------
+	// Function: getRowsToDo
+	// description: returning the linked list of all token from the lines that are not statements
+	//				(these are lines with operation to do)
+	//--------------------------------------------------------------------------------------------
 	public LinkedList<Token> getRowsToDo()
 	{
 		return m_rowsWithoutStatements;
 	}
 
+	//-----------------------------------------------------------------------------------------
+	// Function: GetSymbolAddress
+	// Description: this function is searching for an existing variable in the table and
+	//				returning its memory address.
+	//-----------------------------------------------------------------------------------------
     public String GetSymbolAddress(String str)
     {
         //hello world - this is my first program
@@ -547,8 +573,18 @@ public class ex3_symbol
         return Integer.toString(-1);
     }
 
+    //-----------------------------------------------------------------------------------------
+	// Function: main getVarsWithValues()
+    // Description: This function returns all variables that were initialized with a value.
+    // it actually return an array of pairs- an address followed by the value it needs to get
 	//-----------------------------------------------------------------------------------------
-	// Function: main
+    public ArrayList<Integer> getVarsWithValues()
+    {
+    	return m_varsWithValues;
+    }
+
+	//-----------------------------------------------------------------------------------------
+	// Function: MAIN
 	//-----------------------------------------------------------------------------------------
     public static void main (String args[])
 	{

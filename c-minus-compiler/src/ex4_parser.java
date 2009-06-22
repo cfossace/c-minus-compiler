@@ -5,7 +5,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.LinkedList;
 
-
+//------------------------------------------------------------------------------------------
+//Class: ex4_parser
+//Description: this class is the actual C-- compiler!
+//------------------------------------------------------------------------------------------
 public class ex4_parser
 {
 	private int m_currentRegister;
@@ -16,7 +19,10 @@ public class ex4_parser
 	private int m_integerValue;
 
 
-
+	//------------------------------------------------------------------------------------------
+	// Function: ex4_praser
+	// Description: Constructor
+	//------------------------------------------------------------------------------------------
 	public ex4_parser()
 	{
 		try
@@ -28,11 +34,16 @@ public class ex4_parser
 			m_currentRegister = 0;
 			m_stringBuilder = new StringBuilder();
 			m_integerValue = 0;
+			interpreter = new ex2_interpret();
 
 		}
 		catch (IOException e){System.out.println("Error creating a writer to the file prog.txt! "+e.getMessage());}
 	}
 
+	//----------------------------------------------------------------------------------------------------
+	// Function: getCurrentRegister
+	// Description: returning the next register number that we can put values in (the next free register)
+	//----------------------------------------------------------------------------------------------------
 	private int getCurrentRegister()
 	{
         m_currentRegister++;
@@ -42,11 +53,17 @@ public class ex4_parser
         return m_currentRegister;
 	}
 
+	//-------------------------------------------------------------------------------------------
+	// Function: GO()
+	// Description: This is the main function of this class- it gets tokens in a closed list
+	//				that represents the lines of code we need to interpret.
+	//				every line could contain a cin command (read), cout (print) or an assignment.
+	//-------------------------------------------------------------------------------------------
+
 	public void GO() throws IOException
 	{
 		LinkedList<Token> ToDo = m_symbolTable.getRowsToDo();		//getting the actions to be performed
 		Token currentToken = null;
-		// sb = new StringBuilder();
 		String newLine = System.getProperty("line.separator");
 
 		ToDo.poll();
@@ -63,6 +80,7 @@ public class ex4_parser
 			//---------------------
 			if (currentToken.getToken().equals("cin"))
 			{
+				//checking we got the right tokens and that the variable to read into do exist
 				currentToken = ToDo.poll();
 				if (!currentToken.getToken().equals(">>"))
 					throw new IOException ("Wrong cin command! " +currentToken.getToken());
@@ -70,6 +88,7 @@ public class ex4_parser
 				if ( !m_symbolTable.containsVariable(currentToken.getToken()))
 					throw new IOException("No such Variable to read into! "+currentToken.getToken());
 
+				//adding the suitable assembly code to the string builder
 				int registerNum = getCurrentRegister();
 				m_stringBuilder.append("RD"+"\t"+"0,0,"+registerNum+newLine);
 				m_stringBuilder.append("STW"+"\t"+registerNum+",0,"+m_symbolTable.getTokenMemAddress(currentToken.getToken())+newLine);
@@ -84,24 +103,30 @@ public class ex4_parser
 			//----------------------------
 			else if (currentToken.getToken().equals("cout"))
 			{
+				//checking we got the right tokens and that the variable toprint do exist
 				currentToken = ToDo.poll();
 				if (!currentToken.getToken().equals("<<"))
 					throw new IOException ("Wrong cout command! " +currentToken.getToken());
 				currentToken = ToDo.getFirst();
 				if ( !m_symbolTable.containsVariable(currentToken.getToken()))
 					throw new IOException("No such Variable to print! "+currentToken.getToken());
+
+				//calculating the register to print from and adding the suitable assembly code to the string builder
 				int registerNum = getRegisterNum(ToDo);
 				m_stringBuilder.append("WRD"+"\t"+"0,0,"+registerNum+newLine);
                 ToDo.poll();
 			}
-			//------------------------
-			// if we got an identifier
-			//------------------------
+			//----------------------------------------------------------------
+			// if we got an identifier (This is going to be an assignment)
+			//----------------------------------------------------------------
 			else
 			{
+				//getting the memory address of the first variable
 				ToDo.addFirst(currentToken);
                 int memAddress=getMemAddress(ToDo);
                 ToDo.poll();
+
+               //calculating the register to stor data in and adding the suitable assembly code to the string builder
                 int registerNum = getRegisterNum(ToDo);
                 m_stringBuilder.append("STW"+"\t"+registerNum+",0,"+memAddress+newLine);
                 ToDo.poll();
@@ -110,14 +135,23 @@ public class ex4_parser
 			if (!ToDo.isEmpty())
 				currentToken = ToDo.poll();
 		}
+		//writing all assembly code to the file "interpreter.txt"
+		//and using the interpreter to perform the commands written in the file
 		m_writer.write(m_stringBuilder.toString());
 		m_writer.flush();
-		interpreter = new ex2_interpret();
+
+		interpreter.setVarsValue(m_symbolTable.getVarsWithValues());
 		interpreter.readCommands();
         m_writer.close();
+
         this.WriteOutput();
 	}
 
+	//-------------------------------------------------------------------------------------------
+	// Function: WriteOutput()
+	// Description: This function prints to the file "output.txt". it prints the original
+	//program, its assembly code, and the output.
+	//-------------------------------------------------------------------------------------------
     private void WriteOutput()
     {
         try
@@ -126,6 +160,7 @@ public class ex4_parser
             BufferedWriter w = new BufferedWriter(new FileWriter("output.txt"));
             BufferedReader r = new BufferedReader(new FileReader("prog.txt"));
             String str;
+            w.write("The Original Program:"+newLine);
             while ((str = r.readLine())!=null)
             {
                 w.write(str+newLine);
@@ -134,12 +169,14 @@ public class ex4_parser
             w.flush();
             r.close();
             r = new BufferedReader(new FileReader("interpreter.txt"));
+            w.write("The Assembly Code:"+newLine);
             while ((str = r.readLine())!=null)
             {
                 w.write(str+newLine);
             }
             w.newLine();
             w.flush();
+            w.write("The Output:"+newLine);
             for (int i = 0;i<interpreter.GetAns().size();++i)
                 w.write("output "+(i+1)+": "+interpreter.GetAns().get(i)+newLine);
             w.close();
@@ -147,6 +184,11 @@ public class ex4_parser
         }catch(IOException e){System.out.println(e.getMessage());}
     }
 
+    //-------------------------------------------------------------------------------------------
+	// Function: getMemAddress
+	// Description: This function calculates the value of the memory address of the variables
+    // 				that is currently used in an assignment.
+	//-------------------------------------------------------------------------------------------
 	public int getMemAddress(LinkedList<Token> ToDo) throws IOException
 	{
 		Token token=ToDo.getFirst();
@@ -157,22 +199,21 @@ public class ex4_parser
 			return -1;
 		}
 		ToDo.poll();
-		//String structInstanceName = token.getToken();
         String ZZ = token.getToken();
 		Record rec = m_symbolTable.getRecordByName(ZZ);
 		token = ToDo.getFirst();
 
 		if ((token.getToken_num()==18) || (token.getToken_num()==30))//if we got "[" or "."
 		{
-			if(token.getToken_num()==18) 
+			if(token.getToken_num()==18)
 			{
 				ToDo.poll();
 				token = ToDo.poll();
 
 				String inName=token.getToken();
 				String name=ZZ+"."+inName;
-                String ZZ_adress = m_symbolTable.GetSymbolAddress(name); /**CHECK**/
-                    return Integer.parseInt(ZZ_adress);
+                String ZZ_adress = m_symbolTable.GetSymbolAddress(name);
+                return Integer.parseInt(ZZ_adress);
 			}
 			else
 			{
@@ -182,14 +223,13 @@ public class ex4_parser
 				int index=Integer.parseInt(token.getToken());
 				ToDo.poll();
 				return (Integer.parseInt(rec.getMemAddress())+index*4);
-
 			}
 
 		}
 		else if (rec != null)
 		{
 			String test = rec.getType();
-			//if (  (!(record.getType().equals("var")) ) || (!(record.getType().equals("int"))) )
+			//if we got an unrecognized variable type - throw Exception
 			if ( !test.equals("var") )
 				if ( !test.equals("int") )
 					throw new IOException ("Error!!!");
@@ -200,6 +240,11 @@ public class ex4_parser
             throw new IOException ("Error!!!");
 	}
 
+	//-------------------------------------------------------------------------------------------
+	// Function: getRegisterNum
+	// Description: This function calculates the value of the register nunmber of the variables
+    // 				that is currently used in an assignment.
+	//-------------------------------------------------------------------------------------------
 	public int getRegisterNum(LinkedList<Token> ToDo) throws IOException
 	{
 		int memory=0;
@@ -207,7 +252,6 @@ public class ex4_parser
 		int registerNum=0;
 
 		String newLine = System.getProperty("line.separator");
-		String commandName=new String();
 
 		int reg0=0;
         Token token=ToDo.getFirst();
@@ -227,10 +271,8 @@ public class ex4_parser
             	//-----------
             	case (1):
             	{
-            		commandName="";
                    	registerNum=getCurrentRegister();
-                   	commandName="MUL"+"\t"+registerNum+","+parreg1+","+parreg2;
-                   	m_stringBuilder.append(commandName+newLine);
+                   	m_stringBuilder.append("MUL"+"\t"+registerNum+","+parreg1+","+parreg2+newLine);
                    	break;
             	}
                 //-----------
@@ -238,10 +280,8 @@ public class ex4_parser
                 //-----------
             	case (3):
             	{
-                   commandName="";
                    registerNum=getCurrentRegister();
-                   commandName="DIV"+"\t"+registerNum+","+parreg1+","+parreg2;
-                   m_stringBuilder.append(commandName+newLine);
+                   m_stringBuilder.append("DIV"+"\t"+registerNum+","+parreg1+","+parreg2+newLine);
                    break;
             	}
             	//-----------
@@ -249,10 +289,8 @@ public class ex4_parser
                 //-----------
             	case (6):
             	{
-            		commandName="";
             		registerNum=getCurrentRegister();
-            		commandName="ADD"+"\t"+registerNum+","+parreg1+","+parreg2;
-            		m_stringBuilder.append(commandName+newLine);
+            		m_stringBuilder.append("ADD"+"\t"+registerNum+","+parreg1+","+parreg2+newLine);
             		break;
             	}
                 //-----------
@@ -260,10 +298,8 @@ public class ex4_parser
                 //-----------
                 case (7):
                 {
-                	commandName="";
                    registerNum=getCurrentRegister();
-                   commandName="SUB"+"\t"+registerNum+","+parreg1+","+parreg2;
-                   m_stringBuilder.append(commandName+newLine);
+                   m_stringBuilder.append("SUB"+"\t"+registerNum+","+parreg1+","+parreg2+newLine);
                    break;
                 }
             }
@@ -275,9 +311,8 @@ public class ex4_parser
        {
            int num=m_integerValue;
            token=ToDo.poll();
-           int regMaster=getCurrentRegister();
-           commandName="ADDI"+"\t"+regMaster+",0,"+num;
-           m_stringBuilder.append(commandName+newLine);
+           int regularGetRegister=getCurrentRegister();
+           m_stringBuilder.append("ADDI"+"\t"+regularGetRegister+",0,"+num+newLine);
            int tokenNum = token.getToken_num();
            switch (tokenNum)
            {
@@ -288,12 +323,10 @@ public class ex4_parser
            		{
                    memory1=getMemAddress(ToDo);
                    reg0=getCurrentRegister();
-                   commandName="LDW"+"\t"+reg0+",0,"+memory1;
 
-                   m_stringBuilder.append(commandName+newLine);
+                   m_stringBuilder.append("LDW"+"\t"+reg0+",0,"+memory1+newLine);
                    registerNum=getCurrentRegister();
-                   commandName="MUL"+"\t"+registerNum+","+regMaster+","+reg0;
-                   m_stringBuilder.append(commandName+newLine);
+                   m_stringBuilder.append("MUL"+"\t"+registerNum+","+regularGetRegister+","+reg0+newLine);
                    break;
            		}
            		//-----------
@@ -303,13 +336,9 @@ public class ex4_parser
            		{
                    memory1=getMemAddress(ToDo);
                    reg0=getCurrentRegister();
-                   commandName="LDW"+"\t"+reg0+",0,"+memory1;
-
-                  m_stringBuilder.append(commandName+newLine);
-                   commandName="";
+                   m_stringBuilder.append("LDW"+"\t"+reg0+",0,"+memory1+newLine);
                    registerNum=getCurrentRegister();
-                   commandName="DIV"+"\t"+registerNum+","+regMaster+","+reg0;
-                   m_stringBuilder.append(commandName+newLine);
+                   m_stringBuilder.append("DIV"+"\t"+registerNum+","+regularGetRegister+","+reg0+newLine);
                    break;
            		}
            		//-----------
@@ -319,13 +348,9 @@ public class ex4_parser
            		{
                    memory1=getMemAddress(ToDo);
                    reg0=getCurrentRegister();
-                   commandName="LDW"+"\t"+reg0+",0,"+memory1;
-
-                   m_stringBuilder.append(commandName+newLine);
-                   commandName="";
+                   m_stringBuilder.append("LDW"+"\t"+reg0+",0,"+memory1+newLine);
                    registerNum=getCurrentRegister();
-                   commandName="ADD"+"\t"+registerNum+","+regMaster+","+reg0;
-                   m_stringBuilder.append(commandName+newLine);
+                   m_stringBuilder.append("ADD"+"\t"+registerNum+","+regularGetRegister+","+reg0+newLine);
                    break;
            		}
            		//-----------
@@ -335,13 +360,9 @@ public class ex4_parser
                {
                    memory1=getMemAddress(ToDo);
                    reg0=getCurrentRegister();
-                   commandName="LDW"+"\t"+reg0+",0,"+memory1;
-
-                   m_stringBuilder.append(commandName+newLine);
-                   commandName="";
+                   m_stringBuilder.append("LDW"+"\t"+reg0+",0,"+memory1+newLine);
                    registerNum=getCurrentRegister();
-                   commandName="SUB"+"\t"+registerNum+","+regMaster+","+reg0;
-                   m_stringBuilder.append(commandName+newLine);
+                   m_stringBuilder.append("SUB"+"\t"+registerNum+","+regularGetRegister+","+reg0+newLine);
                    break;
                }
 
@@ -357,52 +378,48 @@ public class ex4_parser
 
         	   switch (operation)
         	   {
+        	   		//-----------
+      				// multiply
+      				//-----------
         	   		case (1):
         	   		{
         	   			reg0=getCurrentRegister();
-        	   			commandName="LDW"+"\t"+reg0+",0,"+memory;
-
-        	   			m_stringBuilder.append(commandName+newLine);
-        	   			commandName="";
+        	   			m_stringBuilder.append("LDW"+"\t"+reg0+",0,"+memory+newLine);
         	   			registerNum=getCurrentRegister();
-        	   			commandName="MULI"+"\t"+registerNum+","+reg0+","+num;
-        	   			m_stringBuilder.append(commandName+newLine);
+        	   			m_stringBuilder.append("MULI"+"\t"+registerNum+","+reg0+","+num+newLine);
         	   			break;
         	   		}
+        	   		//-----------
+           			// divide
+           			//-----------
         	   		case (3):
         	   		{
         	   			reg0=getCurrentRegister();
-        	   			commandName="LDW"+"\t"+reg0+",0,"+memory;
-
-        	   			m_stringBuilder.append(commandName+newLine);
-        	   			commandName="";
+        	   			m_stringBuilder.append("LDW"+"\t"+reg0+",0,"+memory+newLine);
         	   			registerNum=getCurrentRegister();
-        	   			commandName="DIVI"+"\t"+registerNum+","+reg0+","+num;
-        	   			m_stringBuilder.append(commandName+newLine);
+        	   			m_stringBuilder.append("DIVI"+"\t"+registerNum+","+reg0+","+num+newLine);
         	   			break;
         	   		}
+        	   		//-----------
+           			// add
+           			//-----------
         	   		case (6):
         	   		{
         	   			reg0=getCurrentRegister();
-        	   			commandName="LDW"+"\t"+reg0+",0,"+memory;
-
-        	   			m_stringBuilder.append(commandName+newLine);
-        	   			commandName="";
+        	   			m_stringBuilder.append("LDW"+"\t"+reg0+",0,"+memory+newLine);
         	   			registerNum=getCurrentRegister();
-        	   			commandName="ADDI"+"\t"+registerNum+","+reg0+","+num;
-        	   			m_stringBuilder.append(commandName+newLine);
+        	   			m_stringBuilder.append("ADDI"+"\t"+registerNum+","+reg0+","+num+newLine);
         	   			break;
         	   		}
+        	   		//-----------
+           			// subtract
+           			//-----------
         	   		case (7):
         	   		{
         	   			reg0=getCurrentRegister();
-        	   			commandName="LDW"+"\t"+reg0+",0,"+memory;
-
-        	   			m_stringBuilder.append(commandName+newLine);
-        	   			commandName="";
+        	   			m_stringBuilder.append("LDW"+"\t"+reg0+",0,"+memory+newLine);
         	   			registerNum=getCurrentRegister();
-        	   			commandName="SUBI"+"\t"+registerNum+","+reg0+","+num;
-        	   			m_stringBuilder.append(commandName+newLine);
+        	   			m_stringBuilder.append("SUBI"+"\t"+registerNum+","+reg0+","+num+newLine);
         	   			break;
         	   		}
 
@@ -414,61 +431,56 @@ public class ex4_parser
 
         	   switch (operation)
         	   {
-        	   		case (1)://mult
+        	   		//-----------
+      				// multiply
+      				//-----------
+        	   		case (1):
         	   		{
-        	   			//     mem2=getMemAddress(tokens);
         	   			reg0=getCurrentRegister();
-        	   			commandName="LDW"+"\t"+reg0+",0,"+memory;
         	   			reg1=getCurrentRegister();
-        	   			m_stringBuilder.append(commandName+newLine);
-        	   			commandName="LDW"+"\t"+reg1+",0,"+mem4;
-        	   			m_stringBuilder.append(commandName+newLine);
-        	   			commandName="";
+        	   			m_stringBuilder.append("LDW"+"\t"+reg0+",0,"+memory+newLine);
+        	   			m_stringBuilder.append("LDW"+"\t"+reg1+",0,"+mem4+newLine);
         	   			registerNum=getCurrentRegister();
-        	   			commandName="MUL"+"\t"+registerNum+","+reg0+","+reg1;
-        	   			m_stringBuilder.append(commandName+newLine);
+        	   			m_stringBuilder.append("MUL"+"\t"+registerNum+","+reg0+","+reg1+newLine);
         	   			break;
         	   		}
-        	   		case (3)://div
+        	   		//-----------
+           			// divide
+           			//-----------
+        	   		case (3):
         	   		{
         	   			reg0=getCurrentRegister();
-        	   			commandName="LDW"+"\t"+reg0+",0,"+memory;
         	   			reg1=getCurrentRegister();
-        	   			m_stringBuilder.append(commandName+newLine);
-        	   			commandName="LDW"+"\t"+reg1+",0,"+mem4;
-        	   			m_stringBuilder.append(commandName+newLine);
-        	   			commandName="";
+        	   			m_stringBuilder.append("LDW"+"\t"+reg0+",0,"+memory+newLine);
+        	   			m_stringBuilder.append("LDW"+"\t"+reg1+",0,"+mem4+newLine);
         	   			registerNum=getCurrentRegister();
-        	   			commandName="DIV"+"\t"+registerNum+","+reg0+","+reg1;
-        	   			m_stringBuilder.append(commandName+newLine);
+        	   			m_stringBuilder.append("DIV"+"\t"+registerNum+","+reg0+","+reg1+newLine);
         	   			break;
         	   		}
-        	   		case (6)://plus
+        	   		//-----------
+           			// add
+           			//-----------
+        	   		case (6):
         	   		{
         	   			reg0=getCurrentRegister();
-        	   			commandName="LDW"+"\t"+reg0+",0,"+memory;
         	   			reg1=getCurrentRegister();
-        	   			m_stringBuilder.append(commandName+newLine);
-        	   			commandName="LDW"+"\t"+reg1+",0,"+mem4;
-        	   			m_stringBuilder.append(commandName+newLine);
-        	   			commandName="";
+        	   			m_stringBuilder.append("LDW"+"\t"+reg0+",0,"+memory+newLine);
+        	   			m_stringBuilder.append("LDW"+"\t"+reg1+",0,"+mem4+newLine);
         	   			registerNum=getCurrentRegister();
-        	   			commandName="ADD"+"\t"+registerNum+","+reg0+","+reg1;
-        	   			m_stringBuilder.append(commandName+newLine);
+        	   			m_stringBuilder.append("ADD"+"\t"+registerNum+","+reg0+","+reg1+newLine);
         	   			break;
         	   		}
-        	   		case (7)://minus
+        	   		//-----------
+           			// subtract
+           			//-----------
+        	   		case (7):
         	   		{
         	   			reg0=getCurrentRegister();
-        	   			commandName="LDW"+"\t"+reg0+",0,"+memory;
         	   			reg1=getCurrentRegister();
-        	   			m_stringBuilder.append(commandName+newLine);
-        	   			commandName="LDW"+"\t"+reg1+",0,"+mem4;
-        	   			m_stringBuilder.append(commandName+newLine);
-        	   			commandName="";
+        	   			m_stringBuilder.append("LDW"+"\t"+reg0+",0,"+memory+newLine);
+        	   			m_stringBuilder.append("LDW"+"\t"+reg1+",0,"+mem4+newLine);
         	   			registerNum=getCurrentRegister();
-        	   			commandName="SUB"+"\t"+registerNum+","+reg0+","+reg1;
-        	   			m_stringBuilder.append(commandName+newLine);
+        	   			m_stringBuilder.append("SUB"+"\t"+registerNum+","+reg0+","+reg1+newLine);
         	   			break;
         	   		}
 
@@ -484,7 +496,10 @@ public class ex4_parser
 	}
 
 
-
+	//---------------------------------------------
+	// MAIN
+	// Create an instance of ex4_parser and run it
+	//---------------------------------------------
 	public static void main (String args[])
 	{
 		try
