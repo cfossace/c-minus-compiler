@@ -1,0 +1,49 @@
+main() {
+  int a, b, c = 1;
+  int d[3];
+  struct z {
+	  int a;
+	  int b;
+	} zz;
+
+  cin >>     a;
+  cin >> b; 
+  zz.a = 2 * a;
+  zz.b = b / 3;
+  d[0] = (zz.a + 1) * (a - 1);
+  d[1] = 2 - zz.b;
+  d[2] = d[0] + d[1];
+ cout << d[2]* 3; 
+
+}
+
+RD	0,0,1
+STW	1,0,1000
+RD	0,0,2
+STW	2,0,1004
+ADDI	3,0,2
+LDW	4,0,1000
+MUL	5,3,4
+STW	5,0,1024
+LDW	6,0,1004
+DIVI	7,6,3
+STW	7,0,1028
+LDW	8,0,1024
+ADDI	9,8,1
+LDW	10,0,1000
+SUBI	11,10,1
+MUL	12,9,11
+STW	12,0,1012
+ADDI	13,0,2
+LDW	14,0,1028
+SUB	15,13,14
+STW	15,0,1016
+LDW	16,0,1012
+LDW	17,0,1016
+ADD	18,16,17
+STW	18,0,1020
+LDW	19,0,1020
+MULI	20,19,3
+WRD	0,0,20
+
+output 1: 18

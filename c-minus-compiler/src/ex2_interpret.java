@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 
 //------------------------------------------------------------------------------------------
 // Class: Interpreter
@@ -18,6 +19,7 @@ public class ex2_interpret
 	private int[] m_Registers;
 	private BufferedReader m_reader1;
 	private BufferedReader m_reader2;
+    private ArrayList<Integer> answers;
 
 	//--------------------------------------------------------------------------------------
 	// Function: main
@@ -42,6 +44,7 @@ public class ex2_interpret
 			m_Registers = new int[32];
 			m_reader1 = new BufferedReader(new FileReader(new File("interpreter.txt")));
 			m_reader2 = new BufferedReader(new FileReader(new File("input.txt")));
+            answers = new ArrayList<Integer>();
 		}
 		catch (IOException e)
 		{
@@ -129,6 +132,7 @@ public class ex2_interpret
 				case WRD:
 					{
 						System.out.println(m_Registers[c]);
+                        answers.add(m_Registers[c]);
 						break;
 					}
 				case ADDI:
@@ -161,7 +165,10 @@ public class ex2_interpret
 		}
 	}
 
-
+    public ArrayList<Integer> GetAns()
+    {
+        return answers;
+    }
 	//--------------------------------------------------------------------------------------------
 	// Function: readNumFromFile2
 	// Description: this function is reading numbers from the seconds file (one number in a row)

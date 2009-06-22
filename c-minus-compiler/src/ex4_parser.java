@@ -1,4 +1,6 @@
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.LinkedList;
@@ -7,6 +9,7 @@ import java.util.LinkedList;
 public class ex4_parser
 {
 	private int m_currentRegister;
+    private ex2_interpret interpreter;
 	private ex3_symbol m_symbolTable;
 	private BufferedWriter m_writer;
 	private StringBuilder m_stringBuilder;
@@ -109,11 +112,40 @@ public class ex4_parser
 		}
 		m_writer.write(m_stringBuilder.toString());
 		m_writer.flush();
-		ex2_interpret interpreter = new ex2_interpret();
+		interpreter = new ex2_interpret();
 		interpreter.readCommands();
-
-
+        m_writer.close();
+        this.WriteOutput();
 	}
+
+    private void WriteOutput()
+    {
+        try
+        {
+            String newLine = System.getProperty("line.separator");
+            BufferedWriter w = new BufferedWriter(new FileWriter("output.txt"));
+            BufferedReader r = new BufferedReader(new FileReader("prog.txt"));
+            String str;
+            while ((str = r.readLine())!=null)
+            {
+                w.write(str+newLine);
+            }
+            w.newLine();
+            w.flush();
+            r.close();
+            r = new BufferedReader(new FileReader("interpreter.txt"));
+            while ((str = r.readLine())!=null)
+            {
+                w.write(str+newLine);
+            }
+            w.newLine();
+            w.flush();
+            for (int i = 0;i<interpreter.GetAns().size();++i)
+                w.write("output "+(i+1)+": "+interpreter.GetAns().get(i)+newLine);
+            w.close();
+            r.close();
+        }catch(IOException e){System.out.println(e.getMessage());}
+    }
 
 	public int getMemAddress(LinkedList<Token> ToDo) throws IOException
 	{

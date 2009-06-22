@@ -83,6 +83,7 @@ public class Lexer
                 this.tokenize(inline.toCharArray()); //get the tokens from the line
                // reader.readLine(); //read the empty line******* this is not supposed to be here
             }
+            reader.close();
         }
         catch(Exception e) {System.out.println(e.getMessage());}
     }
