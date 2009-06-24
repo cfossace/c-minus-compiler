@@ -1,8 +1,8 @@
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 //------------------------------------------------------------------------------------------
@@ -30,6 +30,7 @@ public class ex4_parser
 			m_symbolTable = new ex3_symbol();
 			m_symbolTable.readWithLexer();
 			m_symbolTable.createTable();
+			m_symbolTable.printTable();
 			m_writer = new BufferedWriter(new FileWriter("interpreter.txt"));
 			m_currentRegister = 0;
 			m_stringBuilder = new StringBuilder();
@@ -111,6 +112,8 @@ public class ex4_parser
 				if ( !m_symbolTable.containsVariable(currentToken.getToken()))
 					throw new IOException("No such Variable to print! "+currentToken.getToken());
 
+				if (this.checkIfNoOperator(ToDo))
+					ToDo = CorrectToDoList(ToDo);
 				//calculating the register to print from and adding the suitable assembly code to the string builder
 				int registerNum = getRegisterNum(ToDo);
 				m_stringBuilder.append("WRD"+"\t"+"0,0,"+registerNum+newLine);
@@ -143,46 +146,55 @@ public class ex4_parser
 		interpreter.setVarsValue(m_symbolTable.getVarsWithValues());
 		interpreter.readCommands();
         m_writer.close();
-
-        this.WriteOutput();
 	}
 
 	//-------------------------------------------------------------------------------------------
-	// Function: WriteOutput()
-	// Description: This function prints to the file "output.txt". it prints the original
-	//program, its assembly code, and the output.
 	//-------------------------------------------------------------------------------------------
-    private void WriteOutput()
-    {
-        try
-        {
-            String newLine = System.getProperty("line.separator");
-            BufferedWriter w = new BufferedWriter(new FileWriter("output.txt"));
-            BufferedReader r = new BufferedReader(new FileReader("prog.txt"));
-            String str;
-            w.write("The Original Program:"+newLine);
-            while ((str = r.readLine())!=null)
-            {
-                w.write(str+newLine);
-            }
-            w.newLine();
-            w.flush();
-            r.close();
-            r = new BufferedReader(new FileReader("interpreter.txt"));
-            w.write("The Assembly Code:"+newLine);
-            while ((str = r.readLine())!=null)
-            {
-                w.write(str+newLine);
-            }
-            w.newLine();
-            w.flush();
-            w.write("The Output:"+newLine);
-            for (int i = 0;i<interpreter.GetAns().size();++i)
-                w.write("output "+(i+1)+": "+interpreter.GetAns().get(i)+newLine);
-            w.close();
-            r.close();
-        }catch(IOException e){System.out.println(e.getMessage());}
-    }
+    public LinkedList<Token> CorrectToDoList(LinkedList<Token> ToDo)
+	{
+		Iterator<Token> iterator = ToDo.iterator();
+		ArrayList<Token> row = new ArrayList<Token>();
+		while (iterator.hasNext())
+		{
+			Token current = iterator.next();
+			if (!current.getToken().equals(";"))
+			{
+				row.add(current);
+				iterator.remove();
+			}
+			else
+				break;
+		}
+		row.add(new Token(1,"*"));
+		row.add(new Token(34,"1"));
+		for (int i=row.size()-1; i>=0;i--)
+			ToDo.addFirst(row.get(i));
+		return ToDo;
+
+	}
+
+	public boolean checkIfNoOperator(LinkedList<Token> ToDo)
+	{
+		Iterator<Token> iterator = ToDo.iterator();
+		ArrayList<Token> row = new ArrayList<Token>();
+		while (iterator.hasNext())
+		{
+			Token current = iterator.next();
+			if (!current.getToken().equals(";"))
+				row.add(current);
+			else
+				break;
+		}
+
+		for (int i=0; i<row.size(); i++)
+		{
+			if ( (row.get(i).getToken_num()==1) || (row.get(i).getToken_num()==3) ||(row.get(i).getToken_num()==6) || (row.get(i).getToken_num()==7)  )
+				return false;
+		}
+		return true;
+	}
+	//-------------------------------------------------------------------------------------------
+	//-------------------------------------------------------------------------------------------
 
     //-------------------------------------------------------------------------------------------
 	// Function: getMemAddress
@@ -494,6 +506,7 @@ public class ex4_parser
 
 
 	}
+
 
 
 	//---------------------------------------------

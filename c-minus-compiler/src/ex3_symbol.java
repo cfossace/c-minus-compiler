@@ -2,7 +2,6 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -347,6 +346,7 @@ public class ex3_symbol
 	//-----------------------------------------------------------------------------------------
 	public void printTable()
 	{
+		this.lastToNull();
 		int i=0;
 		Iterator<Record> iterator = m_list.iterator();
 		while (iterator.hasNext())
